@@ -25,6 +25,10 @@ import { CommonModule } from './common/common.module';
         database: config.get('DATABASE_NAME'),
         autoLoadEntities: true,
         synchronize: true, 
+        
+         ssl: {
+      rejectUnauthorized: false,
+    },
       }),
     }),
     ProductsModule,
