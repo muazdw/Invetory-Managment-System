@@ -4,29 +4,26 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { validationExceptionFactory } from './common/utils/validation-exception.factory';
-import * as cors from 'cors';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ CORS FIX (production safe)
-  app.use(
-    cors({
-      origin: [
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'https://invetory-managment-system-txzl.vercel.app',
-      ],
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true,
-    }),
-  );
+  // ✅ CORS (PRODUCTION SAFE)
+  app.enableCors({
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://invetory-managment-system-txzl.vercel.app',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
 
-  app.enableCors(); // optional fallback
-
+  // ✅ Global filters
   app.useGlobalFilters(new GlobalExceptionFilter());
 
+  // ✅ Validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -34,6 +31,7 @@ async function bootstrap() {
     }),
   );
 
+  // ✅ Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Inventory Management API')
     .setDescription(
@@ -46,13 +44,13 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // ✅ IMPORTANT FOR RENDER
+  // ✅ Render port fix
   const port = process.env.PORT || 3000;
 
   await app.listen(port);
 
   console.log(`Server running on port ${port}`);
-  console.log(`Swagger docs: https://your-domain/api`);
+  console.log(`Swagger docs: /api`);
 }
 
 bootstrap();
