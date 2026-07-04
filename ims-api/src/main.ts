@@ -8,19 +8,19 @@ import { validationExceptionFactory } from './common/utils/validation-exception.
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ CORS (PRODUCTION SAFE)
+  // ✅ FIXED CORS FOR VERCEL + LOCAL + RENDER
   app.enableCors({
     origin: [
+      'https://invetory-managment-system-txzl.vercel.app',
       'http://localhost:5173',
       'http://localhost:3000',
-      'https://invetory-managment-system-txzl.vercel.app',
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
 
-  // ✅ Global filters
+  // ✅ Global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   // ✅ Validation pipe
@@ -31,7 +31,7 @@ async function bootstrap() {
     }),
   );
 
-  // ✅ Swagger setup
+  // ✅ Swagger
   const config = new DocumentBuilder()
     .setTitle('Inventory Management API')
     .setDescription(
@@ -44,7 +44,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // ✅ Render port fix
+  // ✅ Render PORT FIX
   const port = process.env.PORT || 3000;
 
   await app.listen(port);
