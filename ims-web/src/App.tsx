@@ -215,10 +215,8 @@ function App() {
   }, [token, loadAll]);
 
   useEffect(() => {
-    if (token && company?.name) {
-      document.title = company.name;
-    }
-  }, [token, company?.name]);
+    document.title = 'Stockline';
+  }, []);
 
   const handleAuth = async (event: FormEvent) => {
     event.preventDefault();

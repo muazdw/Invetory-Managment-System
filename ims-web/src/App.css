@@ -593,6 +593,19 @@
   letter-spacing: 0.04em;
 }
 
+.data-table td.type-in,
+.data-table td.type-out {
+  font-weight: 600;
+}
+
+.data-table td.type-in {
+  color: var(--color-success);
+}
+
+.data-table td.type-out {
+  color: var(--color-danger);
+}
+
 /* ==========================================================================
    Badges
    ========================================================================== */
