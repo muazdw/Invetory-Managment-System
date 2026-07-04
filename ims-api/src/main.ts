@@ -9,17 +9,17 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // ✅ FIXED CORS FOR VERCEL + LOCAL + RENDER
-  app.enableCors({
-    origin: [
-      'https://invetory-managment-system-txzl.vercel.app',
-      'http://localhost:5173',
-      'http://localhost:3000',
-    ],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-  });
-
+ app.enableCors({
+  origin: [
+    'https://invetory-managment-system-txzl.vercel.app',
+    /^https:\/\/invetory-managment-system-.*\.vercel\.app$/,
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+});
   // ✅ Global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
 
