@@ -84,6 +84,7 @@ function App() {
   const [productQuery, setProductQuery] = useState('');
   const [supplierQuery, setSupplierQuery] = useState('');
   const [historyTypeFilter, setHistoryTypeFilter] = useState<MovementFormState['type'] | 'all'>('all');
+  const [inventoryLowStockOnly, setInventoryLowStockOnly] = useState(false);
   const [employeeFeedback, setEmployeeFeedback] = useState('');
   const [isCrudPanelOpen, setIsCrudPanelOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -94,6 +95,10 @@ function App() {
     [inventory],
   );
   const lowStockCount = lowStockItems.length;
+  const displayedInventory = useMemo(
+    () => (inventoryLowStockOnly ? lowStockItems : inventory),
+    [inventory, inventoryLowStockOnly, lowStockItems],
+  );
   const totalValue = useMemo(
     () => inventory.reduce((sum, item) => sum + item.quantity * Number(item.product.unitPrice ?? 0), 0),
     [inventory],
@@ -418,6 +423,16 @@ function App() {
     setIsCrudPanelOpen(true);
   };
 
+  const handleTabChange = (tab: ViewTab) => {
+    setInventoryLowStockOnly(false);
+    setActiveTab(tab);
+  };
+
+  const navigateToLowStock = () => {
+    setInventoryLowStockOnly(true);
+    setActiveTab('inventory');
+  };
+
   if (!token) {
     return (
       <AuthPage
@@ -445,7 +460,7 @@ function App() {
         sidebar={
           <Sidebar
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={handleTabChange}
             onLogout={logout}
             mobileOpen={mobileNavOpen}
             onMobileClose={() => setMobileNavOpen(false)}
@@ -465,17 +480,35 @@ function App() {
           }
         />
 
-        <div className="stats-grid">
-          <StatCard label="Products" value={products.length} icon={<IconBox size={20} />} />
-          <StatCard label="Suppliers" value={suppliers.length} icon={<IconTruck size={20} />} />
-          <StatCard
-            label="Low Stock Items"
-            value={lowStockCount}
-            icon={<IconAlertTriangle size={20} />}
-            variant={lowStockCount > 0 ? 'warning' : 'default'}
-          />
-          <StatCard label="Total Stock Value" value={fmtMoney(totalValue)} icon={<IconDollar size={20} />} variant="success" />
-        </div>
+        {activeTab === 'dashboard' && (
+          <div className="stats-grid">
+            <StatCard
+              label="Products"
+              value={products.length}
+              icon={<IconBox size={20} />}
+              onClick={() => handleTabChange('products')}
+            />
+            <StatCard
+              label="Suppliers"
+              value={suppliers.length}
+              icon={<IconTruck size={20} />}
+              onClick={() => handleTabChange('suppliers')}
+            />
+            <StatCard
+              label="Low Stock Items"
+              value={lowStockCount}
+              icon={<IconAlertTriangle size={20} />}
+              variant={lowStockCount > 0 ? 'warning' : 'default'}
+              onClick={navigateToLowStock}
+            />
+            <StatCard
+              label="Total Stock Value"
+              value={fmtMoney(totalValue)}
+              icon={<IconDollar size={20} />}
+              variant="success"
+            />
+          </div>
+        )}
 
         {message && (
           <Alert variant={getAlertVariant(message)} message={message} onDismiss={() => setMessage('')} />
@@ -626,13 +659,39 @@ function App() {
         )}
 
         {activeTab === 'inventory' && (
-          <PanelCard title="Stock Levels" description={`${inventory.length} tracked item${inventory.length !== 1 ? 's' : ''}`}>
+          <PanelCard
+            title="Stock Levels"
+            description={`${displayedInventory.length} tracked item${displayedInventory.length !== 1 ? 's' : ''}`}
+            toolbar={
+              <select
+                className="filter-select"
+                value={inventoryLowStockOnly ? 'low' : 'all'}
+                onChange={(e) => setInventoryLowStockOnly(e.target.value === 'low')}
+                aria-label="Filter stock levels"
+              >
+                <option value="all">All items</option>
+                <option value="low">Low stock only</option>
+              </select>
+            }
+          >
             <DataTable
               loading={loading && inventory.length === 0}
-              empty={inventory.length === 0}
+              empty={displayedInventory.length === 0}
               emptyIcon={<IconInbox size={24} />}
-              emptyTitle="No inventory data"
-              emptyDescription="Inventory will appear once products are added and stock movements are recorded."
+              emptyTitle={
+                inventoryLowStockOnly
+                  ? lowStockItems.length === 0
+                    ? 'All stock levels are healthy'
+                    : 'No matching items'
+                  : 'No inventory data'
+              }
+              emptyDescription={
+                inventoryLowStockOnly
+                  ? lowStockItems.length === 0
+                    ? 'No products are currently below their low-stock threshold.'
+                    : 'Try changing the filter to see more items.'
+                  : 'Inventory will appear once products are added and stock movements are recorded.'
+              }
             >
               <thead>
                 <tr>
@@ -643,7 +702,7 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {inventory.map((item) => {
+                {displayedInventory.map((item) => {
                   const low = item.quantity <= item.lowStockThreshold;
                   return (
                     <tr key={item.id}>
